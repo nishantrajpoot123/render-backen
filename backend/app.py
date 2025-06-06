@@ -729,13 +729,14 @@ def upload_files():
 @app.route('/api/download/<session_id>/<filename>', methods=['GET'])
 def download_file(session_id, filename):
     try:
-        file_path = os.path.join(PROCESSED_FOLDER, secure_filename(filename))
+        file_path = os.path.join(PROCESSED_FOLDER, session_id, secure_filename(filename))
         if os.path.exists(file_path):
             return send_file(file_path, as_attachment=True)
         else:
             return jsonify({'error': 'File not found'}), 404
     except Exception as e:
         return jsonify({'error': f'Error downloading file: {str(e)}'}), 500
+
 
 @app.route('/api/cleanup', methods=['POST'])
 def cleanup_old_files():
