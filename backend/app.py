@@ -17,7 +17,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=["https://msdsextractor.vercel.app/"])
+CORS(app, resources={r"/api/*": {"origins": ["https://msdsextractor.vercel.app/"]}})
+
 
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), 'sds_uploads')
 PROCESSED_FOLDER = os.path.join(tempfile.gettempdir(), 'sds_processed')
@@ -555,8 +556,13 @@ def index():
         }
     })
 
-@app.route('/api/upload', methods=['POST'])
+@app.route('/api/upload', methods=['POST', 'OPTIONS'])
+
 def upload_files():
+    
+    if request.method == 'OPTIONS':
+        return '', 200  # This handles the CORS preflight request
+
     try:
         logger.info("Processing upload request")
         
