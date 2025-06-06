@@ -680,8 +680,9 @@ def upload_files():
             new_entries = new_data_df
         
         # Save to new Excel file
-        output_filename = f"{secure_filename(excel_file.filename)}"
-        output_path = os.path.join(PROCESSED_FOLDER, output_filename)
+        output_filename = f"{uuid.uuid4()}_{secure_filename(excel_file.filename)}"
+        output_path = os.path.join("/tmp", output_filename)
+
         
         # Save with proper formatting
         with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
@@ -726,16 +727,17 @@ def upload_files():
         logger.error(error_msg)
         return jsonify({'error': error_msg}), 500
 
-@app.route('/api/download/<session_id>/<filename>', methods=['GET'])
-def download_file(session_id, filename):
+@app.route('/api/download/<filename>', methods=['GET'])
+def download_file(filename):
     try:
-        file_path = os.path.join(PROCESSED_FOLDER, session_id, secure_filename(filename))
+        file_path = os.path.join("/tmp", secure_filename(filename))
         if os.path.exists(file_path):
             return send_file(file_path, as_attachment=True)
         else:
             return jsonify({'error': 'File not found'}), 404
     except Exception as e:
         return jsonify({'error': f'Error downloading file: {str(e)}'}), 500
+
 
 
 @app.route('/api/cleanup', methods=['POST'])
@@ -760,9 +762,10 @@ def cleanup_old_files():
                         logger.error(f"Error cleaning session {session_id}: {str(e)}")
         
         # Clean up processed folder
-        if os.path.exists(PROCESSED_FOLDER):
-            for filename in os.listdir(PROCESSED_FOLDER):
-                file_path = os.path.join(PROCESSED_FOLDER, filename)
+        tmp_dir = '/tmp'
+        if os.path.exists(tmp_dir):
+            for filename in os.listdir(tmp_dir):
+                file_path = os.path.join(tmp_dir, filename)
                 try:
                     created_time = datetime.fromtimestamp(os.path.getctime(file_path))
                     if created_time < cutoff_time:
