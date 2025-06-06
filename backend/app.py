@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, origins=["https://vercel-deploy-one-fawn.vercel.app/"])
+CORS(app, origins=["https://msdsextractor.vercel.app/"])
 
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), 'sds_uploads')
 PROCESSED_FOLDER = os.path.join(tempfile.gettempdir(), 'sds_processed')
