@@ -1,7 +1,15 @@
 services:
   - type: web
-    name: flask-backend
-    env: python
-    buildCommand: ""
-    startCommand: gunicorn app:app
-    plan: free
+    name: flask-pdf-web
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 300 --bind 0.0.0.0:10000
+
+  - type: worker
+    name: flask-pdf-worker
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A tasks.celery worker --loglevel=info --concurrency=4
+
+  - type: redis
+    name: redis
