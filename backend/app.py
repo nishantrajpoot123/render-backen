@@ -680,7 +680,7 @@ def upload_files():
             new_entries = new_data_df
         
         # Save to new Excel file
-        output_filename = f"{uuid.uuid4()}_{secure_filename(excel_file.filename)}"
+        output_filename = "extracted_msds.xlsx"
         output_path = os.path.join("/tmp", output_filename)
 
         
