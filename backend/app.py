@@ -406,43 +406,51 @@ def parse_sds_data(text, source_filename):
         ld50 = find_between(pattern, "NDA", "LD50")
         if ld50 != "NDA":
             break
-
-    inline_patterns = [
-        r"(?i)Product name[:\s]*([^\n\r]+)",
-        r"(?i)Product Name[:\s]*([^\n\r]+)",
-        r"(?i)PRODUCT NAME[:\s]*([^\n\r]+)",
-        r"(?i)Product Name:[:\s]*([^\n\r]+)",
-        r"(?i)Product name\s*:[:\s]*([^\n\r]+)",
+            
+    chemical_name_patterns = [
+        r"Product name[:\s]*([^\n\r]+)",
+        r"Product Name[:\s]*([^\n\r]+)", 
+        r"PRODUCT NAME[:\s]*([^\n\r]+)",
+        r"Product Name:[:\s]*([^\n\r]+)",
+        r"Product name\s*:[:\s]*([^\n\r]+)",
+        r"Identification of the substance[:\s]*([^\n\r]+)",
     ]
-
-    for pattern in inline_patterns:
-        match = re.search(pattern, text)
-        if match:
-            value = match.group(1).strip()
-            if not looks_like_header(value):
-                return value
-
-    # Match when value is on the next line
-    block_pattern = r"(?i)Identification of the substance\s*\n\s*([^\n\r]+)"
-    match = re.search(block_pattern, text)
-    if match:
-        value = match.group(1).strip()
-        if not looks_like_header(value):
-            return value
-
-    return "NDA"
-
-    for pattern in inline_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            extracted = match.group(1).strip()
-
-            # ✅ Skip if it's clearly a section header (too long or contains slashes)
-            if len(extracted) > 60 or "/" in extracted.lower() or "company" in extracted.lower():
-                continue
-
-            name = extracted
-            break
+    
+    def looks_like_header(value):
+        """
+        Reject likely section headers or irrelevant values.
+        """
+        keywords = ['section', 'company', 'undertaking', 'identifier', 'mixture']
+        lowered = value.lower()
+        return (
+            len(value.strip()) < 4 or
+            len(value.strip()) > 60 or
+            any(k in lowered for k in keywords) or
+            "/" in lowered
+        )
+    
+    def extract_chemical_name(text):
+        name = "NDA"
+    
+        for pattern in chemical_name_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                extracted = match.group(1).strip()
+                if looks_like_header(extracted):
+                    continue
+                name = extracted
+                break
+    
+        # Handle case where label and value are on separate lines
+        if name == "NDA":
+            block_pattern = r"Identification of the substance\s*\n\s*([^\n\r]+)"
+            match = re.search(block_pattern, text, re.IGNORECASE)
+            if match:
+                extracted = match.group(1).strip()
+                if not looks_like_header(extracted):
+                    name = extracted
+    
+        return name
 
 
     extracted_data = {
