@@ -407,16 +407,30 @@ def parse_sds_data(text, source_filename):
         if ld50 != "NDA":
             break
 
-    chemical_name_patterns = [
-        r"Product name[:\s]*([^\n\r]+)",
-        r"Product Name[:\s]*([^\n\r]+)", 
-        r"PRODUCT NAME[:\s]*([^\n\r]+)",
-        r"Product Name:[:\s]*([^\n\r]+)",
-        r"Product name\s*:[:\s]*([^\n\r]+)",
-        r"Identification of the substance[:\s]*([^\n\r]+)",
+    inline_patterns = [
+        r"(?i)Product name[:\s]*([^\n\r]+)",
+        r"(?i)Product Name[:\s]*([^\n\r]+)",
+        r"(?i)PRODUCT NAME[:\s]*([^\n\r]+)",
+        r"(?i)Product Name:[:\s]*([^\n\r]+)",
+        r"(?i)Product name\s*:[:\s]*([^\n\r]+)",
     ]
 
-    name = "NDA"
+    for pattern in inline_patterns:
+        match = re.search(pattern, text)
+        if match:
+            value = match.group(1).strip()
+            if not looks_like_header(value):
+                return value
+
+    # Match when value is on the next line
+    block_pattern = r"(?i)Identification of the substance\s*\n\s*([^\n\r]+)"
+    match = re.search(block_pattern, text)
+    if match:
+        value = match.group(1).strip()
+        if not looks_like_header(value):
+            return value
+
+    return "NDA"
 
     for pattern in chemical_name_patterns:
         match = re.search(pattern, text, re.IGNORECASE)
