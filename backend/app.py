@@ -415,43 +415,20 @@ def parse_sds_data(text, source_filename):
         r"Product name\s*:[:\s]*([^\n\r]+)",
         r"Identification of the substance[:\s]*([^\n\r]+)",
     ]
-    
-    def looks_like_header(value):
-        """
-        Reject likely section headers or irrelevant values.
-        """
-        keywords = ['section', 'company', 'undertaking', 'identifier', 'mixture']
-        lowered = value.lower()
-        return (
-            len(value.strip()) < 4 or
-            len(value.strip()) > 60 or
-            any(k in lowered for k in keywords) or
-            "/" in lowered
-        )
-    
-    def extract_chemical_name(text):
-        name = "NDA"
-    
-        for pattern in chemical_name_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                extracted = match.group(1).strip()
-                if looks_like_header(extracted):
-                    continue
-                name = extracted
-                break
-    
-        # Handle case where label and value are on separate lines
-        if name == "NDA":
-            block_pattern = r"Identification of the substance\s*\n\s*([^\n\r]+)"
-            match = re.search(block_pattern, text, re.IGNORECASE)
-            if match:
-                extracted = match.group(1).strip()
-                if not looks_like_header(extracted):
-                    name = extracted
-    
-        return name
 
+    name = "NDA"
+
+    for pattern in chemical_name_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            extracted = match.group(1).strip()
+
+            # ✅ Skip if it's clearly a section header (too long or contains slashes)
+            if len(extracted) > 60 or "/" in extracted.lower() or "company" in extracted.lower():
+                continue
+
+            name = extracted
+            break
 
     extracted_data = {
         "Description": desc,
