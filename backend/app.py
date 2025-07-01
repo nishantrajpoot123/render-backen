@@ -432,7 +432,7 @@ def parse_sds_data(text, source_filename):
 
     return "NDA"
 
-    for pattern in chemical_name_patterns:
+    for pattern in inline_patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             extracted = match.group(1).strip()
