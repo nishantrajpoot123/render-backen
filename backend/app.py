@@ -33,8 +33,9 @@ os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 COLUMNS = [
     "Description",
     "CAS Number",
+    "Material Name",
+    "Trade Name",
     "Physical state (solid/liquid/gas)",
-    "Composition",
     "Static Hazard",
     "Vapour Pressure (in mmHg)",
     "at temp (in degC)",
@@ -378,13 +379,16 @@ def parse_sds_data(text, source_filename):
         vapour_temp = temp_match.group(1)
     
     # Extract other properties with multiple patterns
+    trade_name = find_between(r"(?i)(?:Product\s*/\s*)?Trade\s*Name(?:\s*&\s*Synonyms)?\s*:?\s*([^\n\r]+)")
+
     flash_point = find_between(r"Flash\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
     boiling_point = find_between(
-        r"(?i)\b(?:boiling\s*point\s*or\s*initial\s*boiling\s*point\s*and\s*boiling\s*range|boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([-+]?\d+(?:[.,]\d+)?(?:\s*[-–~to/]\s*[-+]?\d+(?:[.,]\d+)?)*(?:\s*[°º]?[CFK])?(?:\s*/\s*[-+]?\d+(?:[.,]\d+)?\s*[°º]?[CFK])?(?:\s*(?:@|at)?\s*[-+]?\d+(?:[.,]\d+)?\s*(?:mmHg|atm|bar|kPa|Pa))?)",
+        r"(?i)\b(?:boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([^\n\r]*)",
         "NDA",
         "Boiling Point"
     )
+
 
 
 
@@ -415,13 +419,15 @@ def parse_sds_data(text, source_filename):
             break
             
     chemical_name_patterns = [
-        r"Product name[:\s]*([^\n\r]+)",
-        r"Product Name[:\s]*([^\n\r]+)", 
-        r"PRODUCT NAME[:\s]*([^\n\r]+)",
-        r"Product Name:[:\s]*([^\n\r]+)",
-        r"Product name\s*:[:\s]*([^\n\r]+)",
-        r"Identification of the substance[:\s]*([^\n\r]+)",
+        r"(?i)Material name[:\s]*([^\n\r]+)",
+        r"(?i)Product name[:\s]*([^\n\r]+)",
+        r"(?i)Product names[:\s]*([^\n\r]+)",
+        r"(?i)Product Name:[:\s]*([^\n\r]+)",
+        r"(?i)Product name\s*:[:\s]*([^\n\r]+)",
+        r"(?i)Product description[:\s]*([^\n\r]+)",
+        r"(?i)Identification of the substance[:\s]*([^\n\r]+)",
     ]
+
 
     name = "NDA"
 
@@ -440,8 +446,9 @@ def parse_sds_data(text, source_filename):
     extracted_data = {
         "Description": desc,
         "CAS Number": cas_number,
+        "Material Name": name,
+        "Trade Name": trade_name,
         "Physical state (solid/liquid/gas)": physical_state,
-        "Composition":name,
         "Static Hazard": static_hazard,
         "Vapour Pressure (in mmHg)": vapour_pressure,
         "at temp (in degC)": vapour_temp,
