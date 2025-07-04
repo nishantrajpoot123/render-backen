@@ -379,7 +379,10 @@ def parse_sds_data(text, source_filename):
         vapour_temp = temp_match.group(1)
     
     # Extract other properties with multiple patterns
-    trade_name = find_between(r"(?i)(?:Product\s*/\s*)?Trade\s*Name(?:\s*&\s*Synonyms)?\s*:?\s*([^\n\r]+)")
+    pattern = r"(?i)(?:Product\s*/\s*)?Trade\s*Name(?:\s*&\s*Synonyms)?\s*:?\s*([^\n\r]+)"
+    m = re.search(pattern, text)
+    if m:
+        trade_name = m.group(1).strip()
 
     flash_point = find_between(r"Flash\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
