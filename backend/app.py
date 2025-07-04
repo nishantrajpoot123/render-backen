@@ -381,10 +381,11 @@ def parse_sds_data(text, source_filename):
     flash_point = find_between(r"Flash\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
     boiling_point = find_between(
-        r"(?i)\b(?:boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([^\n\r]*)",
+        r"(?i)\b(?:boiling\s*point\s*or\s*initial\s*boiling\s*point\s*and\s*boiling\s*range|boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([-+]?\d+(?:[.,]\d+)?(?:\s*[-–~to/]\s*[-+]?\d+(?:[.,]\d+)?)*(?:\s*[°º]?[CFK])?(?:\s*/\s*[-+]?\d+(?:[.,]\d+)?\s*[°º]?[CFK])?(?:\s*(?:@|at)?\s*[-+]?\d+(?:[.,]\d+)?\s*(?:mmHg|atm|bar|kPa|Pa))?)",
         "NDA",
         "Boiling Point"
     )
+
 
 
     
