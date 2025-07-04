@@ -381,10 +381,11 @@ def parse_sds_data(text, source_filename):
     flash_point = find_between(r"Flash\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
     boiling_point = find_between(
-        r"(?i)\b(?:boiling point|boiling\s*point\s*/\s*range|boiling\s*point\s*,?\s*initial boiling point(?: and boiling range)?|initial boiling point(?: and boiling range)?|boiling\s*point\s*\(.*?\)|boiling\s*point\s*,?\s*range|boiling\s*point\s*/\s*boiling\s*range)\b[:\s]*(?:°C|[(]*°C[)]*)?\s*[:\-]?\s*([\d.,\-]+)",
+        r"(?i)\b(?:boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([^\n\r]*)",
         "NDA",
         "Boiling Point"
     )
+
 
     
     # Density with multiple units
