@@ -341,7 +341,7 @@ def parse_sds_data(text, source_filename):
     
     # Enhanced pattern matching for various properties
     physical_state = find_between(
-        r"(?i)\b(?:physical\s+state|state|form|appearance)\s*:?\s*([^\n\r.]+)", 
+        r"(?i)\b(?:physical\s+state|state|appearance)\s*:?\s*([^\n\r.]+)", 
         "NDA", 
         "Physical State"
     )
@@ -375,10 +375,16 @@ def parse_sds_data(text, source_filename):
         #vapour_temp = temp_match.group(1)
     
     # Extract other properties with multiple patterns
-    pattern = r"(?i)(?:Product\s*/\s*)?Trade\s*Name(?:\s*&\s*Synonyms)?\s*:?\s*([^\n\r]+)"
-    m = re.search(pattern, text)
+
+    
+    trade_pattern = r"(?i)(?:Product\s*/\s*)?Trade\s*Name(?:\s*&\s*Synonyms)?\s*:?\s*([^\n\r]+)"
+    m = re.search(trade_pattern, text)
+    
     if m:
         trade_name = m.group(1).strip()
+    else:
+        trade_name = "NDA"
+
 
     flash_point = find_between(r"Flash\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
