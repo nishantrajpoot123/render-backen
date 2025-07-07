@@ -35,14 +35,14 @@ COLUMNS = [
     "CAS Number",
     "Material Name",
     "Trade Name",
-    "Physical state (solid/liquid/gas)",
+    "Physical state",
     "Static Hazard",
-    "Vapour Pressure (in mmHg)",
+    "Vapour Pressure",
     "Flash Point (°C)",
     "Flammable Limits by Volume (LEL, UEL)",
     "Melting Point (°C)",
     "Boiling Point (°C)",
-    "Density (g/cc)",
+    "Density",
     "Relative Vapour Density (Air = 1)",
     "Ignition Temperature (°C)",
     "Threshold Limit Value (ppm)",
@@ -402,16 +402,44 @@ def parse_sds_data(text, source_filename):
 
     
     # Density with multiple units
-    density_patterns = [
-        r"Density.*?([0-9]+[,.]?[0-9]*)\s*(kg/m3|g/cm3|g/mL|g/L)",
-        r"Density\s*:?\s*([\d,]+[.,]?\d*)\s*(?:g/cm³|g/cc|kg/m³)",
-        r"Specific\s+gravity\s*:?\s*([\d,]+[.,]?\d*)"
-    ]
-    density = "NDA"
-    for pattern in density_patterns:
-        density = find_between(pattern, "NDA", "Density")
-        if density != "NDA":
-            break
+    pattern = r"""(?x)
+        (
+            Density(?![a-z])
+            |
+            (?i:
+                Relative\s+Density
+                |
+                Specific\s+gravity(?:\s+density)?
+                |
+                Specific\s+gravity\s*/\s*density
+                |
+                Density\s*/\s*Specific\s+gravity
+                |
+                Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
+                |
+                Density\s*@\s*\d{1,3}\s*[CFK]
+                |
+                Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]\s*,\s*[gkmg/^\s\d.]+
+                |
+                Specific\s+gravity\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
+                |
+                Relative\s+density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
+                |
+                Relative\s+density\s*\(.*?=\s*1\)
+                |
+                Specific\s+gravity\s*\(.*?=\s*1\)
+            )
+        )
+        \s*[:\-]?\s*
+        (.*)
+    """
+    
+    match = re.search(pattern, text)
+    if match:
+        density = match.group(2).strip()
+    else:
+        density = "NDA"
+
     
     # LD50 extraction
     ld50_patterns = [
@@ -456,14 +484,14 @@ def parse_sds_data(text, source_filename):
         "CAS Number": cas_number,
         "Material Name": name,
         "Trade Name": trade_name,
-        "Physical state (solid/liquid/gas)": physical_state,
+        "Physical state": physical_state,
         "Static Hazard": static_hazard,
-        "Vapour Pressure (in mmHg)": vapour_pressure,
+        "Vapour Pressure": vapour_pressure,
         "Flash Point (°C)": flash_point,
         "Flammable Limits by Volume (LEL, UEL)": extract_flammable_limits(text),
         "Melting Point (°C)": melting_point,
         "Boiling Point (°C)": boiling_point,
-        "Density (g/cc)": density,
+        "Density": density,
         "Relative Vapour Density (Air = 1)": find_between(r"Relative\s+vapou?r\s+density\s*:?\s*([\d,]+[.,]?\d*)", "NDA", "Vapor Density"),
         "Ignition Temperature (°C)": find_between(r"(?:Auto|Self)[-\s]?ignition\s+temperature\s*:?\s*([\d,]+[.,]?\d*)", "NDA", "Ignition Temp"),
         "Threshold Limit Value (ppm)": find_between(r"TLV\s*:?\s*([^\n\r]+)", "NDA", "TLV"),
