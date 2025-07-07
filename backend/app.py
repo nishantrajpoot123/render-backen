@@ -38,7 +38,6 @@ COLUMNS = [
     "Physical state (solid/liquid/gas)",
     "Static Hazard",
     "Vapour Pressure (in mmHg)",
-    "at temp (in degC)",
     "Flash Point (°C)",
     "Flammable Limits by Volume (LEL, UEL)",
     "Melting Point (°C)",
@@ -341,42 +340,39 @@ def parse_sds_data(text, source_filename):
     desc = os.path.splitext(source_filename)[0]
     
     # Enhanced pattern matching for various properties
-    physical_state = find_between(r"Physical\s+state\s*:?\s*([^\n\r.]+)", "NDA", "Physical State")
-    if physical_state == "NDA":
-        physical_state = find_between(r"State\s*:?\s*([^\n\r.]+)", "NDA", "State")
+    physical_state = find_between(
+        r"(?i)\b(?:physical\s+state|state|form|appearance)\s*:?\s*([^\n\r.]+)", 
+        "NDA", 
+        "Physical State"
+    )
+
     
     
     static_hazard = extract_static_hazard(text)
-    
-    # Vapor pressure with unit conversion
+
     vapour_pressure = "NDA"
-    vapour_temp = "21"  # Default temperature
+
+
+    vapour_pressure = "NDA"
     
-    # Try different vapor pressure patterns
-    vp_patterns = [
-        r"Vapou?r\s+pressure\s*:?\s*([\d,]+[.,]?\d*)\s*atm",
-        r"Vapou?r\s+pressure\s*:?\s*([\d,]+[.,]?\d*)\s*mmHg",
-        r"Vapou?r\s+pressure\s*:?\s*([\d,]+[.,]?\d*)\s*Pa",
-        r"Pressure\s*:?\s*([\d,]+[.,]?\d*)\s*(?:atm|mmHg|Pa)"
-    ]
+    vp_pattern = r"""(?ix)                             # (?i) case-insensitive, (?x) verbose mode
+        vapo[u]?r\s+pressure                           # 'vapor pressure' or 'vapour pressure'
+        (?:\s*\(.*?\))?                                # optional: (mmHg), (Pa), etc.
+        (?:\s+at\s+\d{1,3}\s*(?:degree)?\s*[°]?[Cc])?   # optional: 'at 20 degreeC' or 'at 30 C'
+        \s*[:\-]?\s*                                   # optional: colon, dash
+        (.*)                                           # capture the rest of the line
+    """
     
-    for pattern in vp_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            value = clean_numeric_value(match.group(1))
-            if value != "NDA":
-                if "atm" in pattern:
-                    vapour_pressure = f"{float(value) * 760:.1f}"
-                elif "Pa" in pattern:
-                    vapour_pressure = f"{float(value) * 0.00750062:.1f}"
-                else:
-                    vapour_pressure = value
-                break
+    match = re.search(vp_pattern, text)
+    if match:
+        vapour_pressure = match.group(1).strip()
+
+
     
     # Temperature for vapor pressure
-    temp_match = re.search(r"(?:at|@)\s*(\d+)\s*°?C", text, re.IGNORECASE)
-    if temp_match:
-        vapour_temp = temp_match.group(1)
+    # temp_match = re.search(r"(?:at|@)\s*(\d+)\s*°?C", text, re.IGNORECASE)
+    # if temp_match:
+        #vapour_temp = temp_match.group(1)
     
     # Extract other properties with multiple patterns
     pattern = r"(?i)(?:Product\s*/\s*)?Trade\s*Name(?:\s*&\s*Synonyms)?\s*:?\s*([^\n\r]+)"
@@ -454,7 +450,6 @@ def parse_sds_data(text, source_filename):
         "Physical state (solid/liquid/gas)": physical_state,
         "Static Hazard": static_hazard,
         "Vapour Pressure (in mmHg)": vapour_pressure,
-        "at temp (in degC)": vapour_temp,
         "Flash Point (°C)": flash_point,
         "Flammable Limits by Volume (LEL, UEL)": extract_flammable_limits(text),
         "Melting Point (°C)": melting_point,
