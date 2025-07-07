@@ -342,7 +342,7 @@ def parse_sds_data(text, source_filename):
     # Enhanced pattern matching for various properties
     physical_state = find_between(
         r"""(?ix)
-            \b(?:physical\s+state|form|appearance)              # keywords
+            \b(?:physical\s+state|appearance:\s+form|appearance)              # keywords
             (?:\s+at\s+[^\n\r:]*?(?:degree|°)\s*[CF])?           # optional: at 25 degreeC or °C etc.
             \s*[:\-]?\s*                                         # optional colon or dash
             ([^\n\r.]+)                                          # capture physical state
