@@ -402,45 +402,54 @@ def parse_sds_data(text, source_filename):
 
     
     # Density with multiple units
-    pattern = r"""(?x)
-        (
-            Density(?![a-z])
-            |
-            (?i:
-                Relative\s+Density
-                |
-                Specific\s+gravity(?:\s+density)?
-                |
-                Specific\s+gravity\s*/\s*density
-                |
-                Density\s*/\s*Specific\s+gravity
-                |
-                Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
-                |
-                Density\s*@\s*\d{1,3}\s*[CFK]
-                |
-                Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]\s*,\s*[gkmg/^\s\d.]+
-                |
-                Specific\s+gravity\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
-                |
-                Relative\s+density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
-                |
-                Relative\s+density\s*\(.*?=\s*1\)
-                |
-                Specific\s+gravity\s*\(.*?=\s*1\)
-            )
-        )
-        \s*[:\-]?\s*
-        (.*)
-    """
-    
-    match = re.search(pattern, text)
-    if match:
-        density = match.group(2).strip()
-    else:
-        density = "NDA"
+    density = "NDA"
 
+    # Priority 1: Match 'Relative Density' (case-sensitive)
+    primary_pattern_1 = r"Relative\s+Density\s*[:\-]?\s*(.*)"
+    match = re.search(primary_pattern_1, text)
     
+    if match:
+        density = match.group(1).strip()
+    
+    else:
+        # Priority 2: Match 'Density' (case-sensitive)
+        primary_pattern_2 = r"Density\s*[:\-]?\s*(.*)"
+        match = re.search(primary_pattern_2, text)
+    
+        if match:
+            density = match.group(1).strip()
+    
+        else:
+            # Priority 3: Case-insensitive fallback for all variants
+            fallback_pattern = r"""(?ix)
+                (
+                    Specific\s+gravity(?:\s+density)?
+                    |
+                    Specific\s+gravity\s*/\s*density
+                    |
+                    Density\s*/\s*Specific\s+gravity
+                    |
+                    Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
+                    |
+                    Density\s*@\s*\d{1,3}\s*[CFK]
+                    |
+                    Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]\s*,\s*[gkmg/^\s\d.]+
+                    |
+                    Specific\s+gravity\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
+                    |
+                    Relative\s+density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
+                    |
+                    Relative\s+density\s*\(.*?=\s*1\)
+                    |
+                    Specific\s+gravity\s*\(.*?=\s*1\)
+                )
+                \s*[:\-]?\s*
+                (.*)
+            """
+            match = re.search(fallback_pattern, text)
+            if match:
+                density = match.group(2).strip()
+
     # LD50 extraction
     ld50_patterns = [
         r"LD50.*?([0-9,]+[.,]?\d*)\s*mg/kg",
