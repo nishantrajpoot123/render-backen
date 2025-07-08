@@ -423,32 +423,38 @@ def parse_sds_data(text, source_filename):
         "Melting Point"
     )
 
-    boiling_point = find_between(
-        r"""(?ix)
-            \b
-            (
-                boiling\s*point
-                (?:
-                    \s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?
-                    |
-                    \s*/\s*range
-                    |
-                    \s*/\s*boiling\s*range
-                    |
-                    \s*,?\s*range
-                    |
-                    \s*\(.*?\)
-                )?
-                |
-                initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?
-            )
-            \b
-            \s*[:\-]?\s*
-            (.*)
-        """,
-        "NDA",
-        "Boiling Point"
-    )
+    import re
+
+boiling_point = "NDA"
+
+boiling_point_pattern = r"""(?ix)                             # (?i) case-insensitive, (?x) verbose
+        \b
+        (?:boiling\s*point                                        # 'boiling point'
+            (?:\s*(?:or|,)?\s*initial\s*boiling\s*point            # 'or initial boiling point'
+                (?:\s*and\s*boiling\s*range)?                     # optional 'and boiling range'
+            )?
+            |
+            boiling\s*point\s*/\s*range
+            |
+            boiling\s*point\s*/\s*boiling\s*range
+            |
+            boiling\s*point\s*,?\s*range
+            |
+            boiling\s*point\s*\(.*?\)                             # e.g., boiling point (760 mmHg)
+            |
+            initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?
+        )
+        \b
+        (?:\s*\(.*?\))?                                           # optional units or comments in ()
+        (?:\s+at\s+\d{1,3}\s*(?:degree)?\s*[°]?[CFK])?             # optional: 'at 20°C', etc.
+        \s*[:\-]?\s*                                              # optional colon or dash
+        (.*)                                                      # capture full value
+    """
+    
+    match = re.search(boiling_point_pattern, text)
+    if match:
+        boiling_point = match.group(1).strip()
+    
 
 
 
