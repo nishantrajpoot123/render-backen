@@ -391,69 +391,23 @@ def parse_sds_data(text, source_filename):
 
 
     flash_point = find_between(r"Flash\s+point\s*:?\s*(-?[\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
+
+
     melting_point = find_between(
-        r"""(?ix)
-            \b
-            (
-                melting\s+point\s*/\s*freezing\s+point
-                |
-                freezing\s*/\s*melting\s+point
-                |
-                freezing\s+point\s*/\s*range
-                |
-                melting\s*/\s*freezing\s+point\s*(?:°[CF])?
-                |
-                melting\s+point\s*/\s*melting\s+range
-                |
-                melting\s+point\s*/\s*range
-                |
-                melting\s+point\s*(?:°[CF])?
-                |
-                freezing\s+point\s*(?:°[CF])?
-                |
-                melting\s+point
-                |
-                freezing\s+point
-            )
-            \b
-            \s*[:\-]?\s*
-            (.*)
-        """,
+        r"(?i)\b(?:melting\s*point\s*/\s*freezing\s*point|freezing\s*/\s*melting\s*point|freezing\s*point\s*/\s*range|melting\s*/\s*freezing\s*point\s*(?:°[CF])?|melting\s*point\s*/\s*melting\s*range|melting\s*point\s*/\s*range|melting\s*point\s*(?:°[CF])?|freezing\s*point\s*(?:°[CF])?|melting\s*point|freezing\s*point)\b[:\s\-]*(-?[^\n\r]*)",
         "NDA",
         "Melting Point"
     )
 
-    import re
 
-boiling_point = "NDA"
-
-boiling_point_pattern = r"""(?ix)                             # (?i) case-insensitive, (?x) verbose
-        \b
-        (?:boiling\s*point                                        # 'boiling point'
-            (?:\s*(?:or|,)?\s*initial\s*boiling\s*point            # 'or initial boiling point'
-                (?:\s*and\s*boiling\s*range)?                     # optional 'and boiling range'
-            )?
-            |
-            boiling\s*point\s*/\s*range
-            |
-            boiling\s*point\s*/\s*boiling\s*range
-            |
-            boiling\s*point\s*,?\s*range
-            |
-            boiling\s*point\s*\(.*?\)                             # e.g., boiling point (760 mmHg)
-            |
-            initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?
-        )
-        \b
-        (?:\s*\(.*?\))?                                           # optional units or comments in ()
-        (?:\s+at\s+\d{1,3}\s*(?:degree)?\s*[°]?[CFK])?             # optional: 'at 20°C', etc.
-        \s*[:\-]?\s*                                              # optional colon or dash
-        (.*)                                                      # capture full value
-    """
     
-    match = re.search(boiling_point_pattern, text)
-    if match:
-        boiling_point = match.group(1).strip()
+
+    
+
+     boiling_point = find_between(
+        r"(?i)\b(?:boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([^\n\r]*)","NDA",
+        "Boiling Point")
+    
     
 
 
