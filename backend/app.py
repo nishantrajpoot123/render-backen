@@ -391,7 +391,7 @@ def parse_sds_data(text, source_filename):
 
 
     flash_point = find_between(
-        r"(?i)\bflash\s+point\b\s*[:\-]?\s*(-?\d+(?:[.,]\d+)?(?:\s*°[CF])?.*?)",
+        r"(?i)\bflash\s+point\b\s*[:\-]?\s*(.*)",
         "NDA",
         "Flash Point"
     )
