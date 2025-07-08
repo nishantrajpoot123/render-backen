@@ -390,18 +390,12 @@ def parse_sds_data(text, source_filename):
         trade_name = "NDA"
 
 
-    flash_point = "NDA"
+    flash_point = find_between(
+    r"(?i)\bflash\s+point\b\s*[:]?\s*(.*)",
+    "NDA",
+    "Flash Point"
+)
 
-    flash_point_pattern = r"""(?ix)                        # (?i) case-insensitive, (?x) verbose mode
-        \bflash\s+point\b                                  # match 'Flash point'
-        (?:\s+at\s+\d{1,3}\s*(?:degree)?\s*[°]?\s*[CF])?    # optional: at 20°C or 25 degree C
-        \s*[:\-]?\s*                                       # optional colon or dash
-        (.*)                                               # capture everything after the label
-    """
-    
-    match = re.search(flash_point_pattern, text)
-    if match:
-        flash_point = match.group(1).strip()
 
     
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
