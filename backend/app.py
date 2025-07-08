@@ -47,7 +47,8 @@ COLUMNS = [
     "Ignition Temperature (°C)",
     "Threshold Limit Value (ppm)",
     "Immediate Danger to Life in Humans",
-    "Toxicological Info LD50 (mg/kg)",
+    "LD50 (mg/kg)",
+    "LC50",
     "Source of Information"
 ]
 
@@ -480,17 +481,28 @@ def parse_sds_data(text, source_filename):
 
     # LD50 extraction
     ld50_patterns = [
-        r"LD50.*?([0-9,]+[.,]?\d*)\s*mg/kg",
-        r"LD50\s*:?\s*([\d,]+[.,]?\d*)\s*mg/kg",
-        r"LD50\s*:?\s*(?:oral|dermal)?\s*([\d,]+[.,]?\d*)\s*mg/kg",
-        r"LD₅₀\s*:?\s*(?:oral|dermal)?\s*([\d,]+[.,]?\d*)\s*mg/kg"
+        r"LD[50₅O]+\s*(?:oral|dermal)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/kg(?:\s*\(.*?\))?)",
+        r"LD[50₅O]+\s*[:\-]?\s*(?:oral|dermal)?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/kg(?:\s*\(.*?\))?)",
+        r"LD[50₅O]+\s*(?:oral|dermal)?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/kg(?:\s*\(.*?\))?)",
     ]
+
     ld50 = "NDA"
     for pattern in ld50_patterns:
         ld50 = find_between(pattern, "NDA", "LD50")
         if ld50 != "NDA":
             break
-            
+    lc50_patterns = [
+        r"LC[50₅O]+\s*(?:inhalation)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/L(?:\s*\((?!.*fish|zebrafish|minnow).*?\))?(?:\s*\d+\s*(?:h|hr))?)",
+        r"LC[50₅O]+\s*(?:inhalation)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*ppm(?:\s*\((?!.*fish|zebrafish|minnow).*?\))?(?:\s*\d+\s*(?:h|hr))?)"
+    ]
+    
+    lc50 = "NDA"
+    for pattern in lc50_patterns:
+        lc50 = find_between(pattern, "NDA", "LC50")
+        if lc50 != "NDA":
+            break
+
+                
     chemical_name_patterns = [
         r"(?i)Material name[:\s]*([^\n\r]+)",
         r"(?i)Product name[:\s]*([^\n\r]+)",
@@ -516,6 +528,21 @@ def parse_sds_data(text, source_filename):
             name = extracted
             break
 
+    
+    pattern = r"""(?ix)
+        (?:auto|self)?            
+        [-\s]?                    
+        ignition                 
+        (?:\s+temperature)?       
+        (?:\s*,?\s*°?\s*C)?        
+        \s*[:\-]?\s*              
+        ([\d,]+[.,]?\d*)          
+    """
+    
+    match = re.search(pattern, text)
+    ignition_temp = match.group(1) if match else "NDA"
+
+
     extracted_data = {
         "Description": desc,
         "CAS Number": cas_number,
@@ -529,11 +556,12 @@ def parse_sds_data(text, source_filename):
         "Melting Point (°C)": melting_point,
         "Boiling Point (°C)": boiling_point,
         "Density": density,
-        "Relative Vapour Density (Air = 1)": find_between(r"Relative\s+vapou?r\s+density\s*:?\s*([\d,]+[.,]?\d*)", "NDA", "Vapor Density"),
-        "Ignition Temperature (°C)": find_between(r"(?:Auto|Self)[-\s]?ignition\s+temperature\s*:?\s*([\d,]+[.,]?\d*)", "NDA", "Ignition Temp"),
+        "Relative Vapour Density (Air = 1)": vapor_density,
+        "Ignition Temperature (°C)": ignition_temp,
         "Threshold Limit Value (ppm)": find_between(r"TLV\s*:?\s*([^\n\r]+)", "NDA", "TLV"),
         "Immediate Danger to Life in Humans": find_between(r"LC50\s*[-:]\s*.*?([0-9,]+.*?)\s*(mg|g|ppm|mL|L)", "NDA"),
-        "Toxicological Info LD50 (mg/kg)": ld50,
+        "LD50 (mg/kg)": ld50,
+        "LC50": lc50,
         "Source of Information": "MSDS"
     }
     
