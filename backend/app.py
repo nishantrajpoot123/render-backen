@@ -390,7 +390,7 @@ def parse_sds_data(text, source_filename):
         trade_name = "NDA"
 
 
-    flash_point = find_between(r"Flash\s+point\s*:?\s*(-?[\d\-,]+[.,]?\d*)", "NDA", "Flash Point")
+    flash_point = find_between(r"(?i)flash\s+point\s*:?\s*(-?\s*\d+(?:[.,]?\d*)?.*?)", "NDA", "Flash Point")
     
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
     boiling_point = find_between(
@@ -404,7 +404,7 @@ def parse_sds_data(text, source_filename):
     # Define values to ignore
     invalid_values = ["not measured", "no data available", "Not applicable", "No data available", "not applicable","not available"]
 
-    match = re.search(r"Density\s+and\s+/\s+or\s+relative\s+density\s*[:\-]?\s*(.*)", text)
+    match = re.search(r"Density\s+and\s+/\s+or\s+relative\s+density\s*[:\-]?\s*(.*)", text, re.IGNORECASE)
     if match:
         value = match.group(1).strip()
         if value.lower() not in invalid_values:
@@ -429,6 +429,8 @@ def parse_sds_data(text, source_filename):
     if density == "NDA":
         fallback_pattern = r"""(?ix)
             (    
+                Specific\s+gravity\s*\(.*?=\s*1\)
+                |
                 Relative\s+density\s*\(.*?=\s*1\)
                 |
                 Specific\s+gravity(?:\s+density)?
@@ -446,8 +448,7 @@ def parse_sds_data(text, source_filename):
                 Specific\s+gravity\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
                 |
                 Relative\s+density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
-                |
-                Specific\s+gravity\s*\(.*?=\s*1\)
+                
             )
             \s*[:\-]?\s*
             (.*)
@@ -537,8 +538,6 @@ def parse_sds_data(text, source_filename):
         \s*[:\-]?\s*                                                
         ([\d,]+[.,]?\d*)                                            
     """
-
-    
     match = re.search(pattern, text)
     ignition_temp = match.group(1) if match else "NDA"
 
