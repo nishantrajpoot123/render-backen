@@ -390,7 +390,12 @@ def parse_sds_data(text, source_filename):
         trade_name = "NDA"
 
 
-    flash_point = find_between(r"(?i)flash\s+point\s*:?\s*(-?\s*\d+(?:[.,]?\d*)?.*?)", "NDA", "Flash Point")
+    flash_point = find_between(
+        r"(?i)\bflash\s+point\b\s*[:\-]?\s*(-?\d+(?:[.,]\d+)?(?:\s*°[CF])?.*?)",
+        "NDA",
+        "Flash Point"
+    )
+
     
     melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
     boiling_point = find_between(
