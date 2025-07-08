@@ -390,17 +390,19 @@ def parse_sds_data(text, source_filename):
         trade_name = "NDA"
 
 
-    flash_point = find_between(
-        r"""(?ix)                            # Case-insensitive, verbose mode
-        \bflash\s+point\b                   # Match 'Flash point'
-        \s*:?                               # Optional colon, no dash
-        \s*                                 # Optional space after colon
-        (.*)                                # Capture everything (including negative sign)
-        """,
-        "NDA",
-        "Flash Point"
-    )
-
+    flash_point_pattern = r"""(?ix)                       # case-insensitive + verbose
+        \bflash\s+point\b                                 # matches 'Flash point'
+        \s*:?                                              # optional colon
+        \s*                                                # optional space
+        (-?\d+(?:[.,]?\d+)?(?:\s*°\s*[CF])?.*)             # capture negative value and everything after it
+    """
+    
+    
+    flash_point = "NDA"
+    
+    match = re.search(flash_point_pattern, text)
+    if match:
+        flash_point = match.group(1).strip()
 
 
     
