@@ -403,6 +403,12 @@ def parse_sds_data(text, source_filename):
     
     # Define values to ignore
     invalid_values = ["not measured", "no data available", "Not applicable", "No data available", "not applicable","not available"]
+
+    match = re.search(r"Density\s+and\s+/\s+or\s+relative\s+density\s*[:\-]?\s*(.*)", text)
+    if match:
+        value = match.group(1).strip()
+        if value.lower() not in invalid_values:
+            density = value
     
     # Priority 1: Try 'Relative Density' (case-insensitive)
     match = re.search(r"Relative\s+Density\s*[:\-]?\s*(.*)", text)
@@ -453,6 +459,21 @@ def parse_sds_data(text, source_filename):
                 density = value
     
 
+    # vapor density
+    vapor_density = "NDA"
+
+    vapor_density_pattern = r"""(?ix)                                 # (?i) case-insensitive, (?x) verbose mode
+        (?:relative\s+)?                                               # optional 'relative'
+        vapo[u]?r\s+density                                            # 'vapor density' or 'vapour density'
+        (?:\s*\(air\s*=\s*1\))?                                        # optional: (air = 1)
+        (?:\s+at\s+\d{1,3}\s*(?:degree)?\s*[°]?\s*C)?                  # optional: at 20 °C or at 30 degree C
+        \s*[:\-]?\s*                                                   # optional colon or dash
+        (.*)                                                           # capture everything after the label
+    """
+    
+    match = re.search(vapor_density_pattern, text)
+    if match:
+        vapor_density = match.group(1).strip()
 
     
    
