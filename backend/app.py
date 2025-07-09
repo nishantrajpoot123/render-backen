@@ -299,7 +299,32 @@ def parse_sds_data(text, source_filename):
 
 
     
-    melting_point = find_between(r"Melting\s+point\s*:?\s*([\d\-,]+[.,]?\d*)", "NDA", "Melting Point")
+    melt_pattern = r"""(?ix)
+    \b
+    (
+        melting\s+point\s*/\s*freezing\s+point
+        | freezing\s*/\s*melting\s+point
+        | freezing\s+point\s*/\s*range
+        | melting\s*/\s*freezing\s+point\s*(?:°\s*C|deg\s*C)?
+        | melting\s+point\s*/\s*melting\s+range
+        | melting\s+point\s*/\s*range
+        | melting\s+point\s*(?:°\s*C|deg\s*C)?
+        | freezing\s+point\s*(?:°\s*C|deg\s*C)?
+        | melting\s+point
+        | freezing\s+point
+    )
+    \s*:\s*
+    ([^\n\r]+)
+    """
+    
+    melting_point = "NDA"
+    
+    match = re.search(pattern, text)
+    if match:
+        melting_point = match.group(2).strip()
+
+
+    
     boiling_point = find_between(
         r"(?i)\b(?:boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([^\n\r]*)",
         "NDA",
@@ -520,13 +545,13 @@ def parse_sds_data(text, source_filename):
 
     # Regex pattern to match one exposure limit (e.g. TWA: 5 mg/m3)
     tlv_pattern = r"""(?ix)
-    \b
-    (?:TWA|STEL|TLV|PEL|REL|OEL|MAK|EU-OEL|NIOSH\s+REL|OSHA\s+PEL|ACGIH\s+TLV)
-    (?:\s*[:\-]?\s*|\s+as\s+)?
-    (\d+\.?\d*)
-    \s*
-    (ppm|mg/m3|mg\/m3)
-    """
+        \b
+        (?:TWA|STEL|TLV|PEL|REL|OEL|MAK|EU-OEL|NIOSH\s+REL|OSHA\s+PEL|ACGIH\s+TLV)
+        (?:\s*[:\-]?\s*|\s+as\s+)?
+        (\d+\.?\d*)
+        \s*
+        (ppm|mg/m3|mg\/m3)
+        """
     
     # Default value if nothing is found
     tlv = "NDA"
@@ -538,14 +563,14 @@ def parse_sds_data(text, source_filename):
 
 
     idlh_pattern = r"""(?ix)
-    \b
-    (?:IDLH|Immediately\s+Dangerous\s+to\s+Life\s+or\s+Health)  # IDLH or full form
-    (?:\s*\(IDLH\))?                                            # optional (IDLH)
-    \s*[:=\-]?\s*                                               # optional colon, equal, dash, or just space
-    (\d+\.?\d*)                                                 # numeric value
-    \s*
-    (ppm|mg/m3|mg\/m3)?                                         # optional unit
-    """
+        \b
+        (?:IDLH|Immediately\s+Dangerous\s+to\s+Life\s+or\s+Health)  # IDLH or full form
+        (?:\s*\(IDLH\))?                                            # optional (IDLH)
+        \s*[:=\-]?\s*                                               # optional colon, equal, dash, or just space
+        (\d+\.?\d*)                                                 # numeric value
+        \s*
+        (ppm|mg/m3|mg\/m3)?                                         # optional unit
+        """
     
     # Default value
     idlh = "NDA"
