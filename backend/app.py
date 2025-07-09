@@ -136,7 +136,7 @@ def parse_sds_data(text, source_filename):
             return result
         logger.debug(f"No match found for {field_name}")
         return default
-    flammable_limits = extract_flammable_limits(text)
+    
     # Fixed CAS Number extraction - handles complete CAS number format
     def extract_cas_number(text):
         """Extract CAS number without applying numeric cleaning"""
