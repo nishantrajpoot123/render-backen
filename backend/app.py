@@ -451,7 +451,7 @@ def parse_sds_data(text, source_filename):
 
 
     # Refined regex pattern to extract UEL with label and value
-    pattern = r"""(?ix)
+    uel_pattern = r"""(?ix)
     \b(
         upper\s+(?:explosion|flammability)\s+limit
         |
@@ -479,9 +479,43 @@ def parse_sds_data(text, source_filename):
     uel = "NDA"
     
     # Search for the first match based on priority
-    match = re.search(pattern, text)
+    match = re.search(uel_pattern, text)
     if match:
         uel = match.group(2)
+
+
+    # Refined regex pattern to extract UEL with label and value
+    lel_pattern = r"""(?ix)
+    \b(
+        lower\s+(?:explosion|flammability)\s+limit
+        |
+        explosive\s+limit[-\s]*lower
+        |
+        lower\s+explosion\s+limit\s*\(%\s*by\s*volume\)
+        |
+        explosive\s+limit[-\s]*lower\s*\(%\s*\)
+        |
+        lower\s+explosion\s+limit
+        |
+        LEL\s*\(%\s*by\s*volume\)
+        |
+        \bLEL\b
+        |
+        lower\s+explosive\s+limit
+        |
+        lower\s+flammability\s*/\s*(?:explosion|explosive)\s+limit
+    )
+    \s*[:\-]?\s*
+    ([\-\d.,]+%?)
+    """
+    
+    # Default UEL value
+    lel = "NDA"
+    
+    # Search for the first match based on priority
+    match = re.search(lel_pattern, text)
+    if match:
+        lel = match.group(2)
 
     
     extracted_data = {
