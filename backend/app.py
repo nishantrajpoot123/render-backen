@@ -517,7 +517,46 @@ def parse_sds_data(text, source_filename):
     if match:
         lel = match.group(2)
 
+
+    # Regex pattern to match one exposure limit (e.g. TWA: 5 mg/m3)
+    tlv_pattern = r"""(?ix)
+    \b
+    (?:TWA|STEL|TLV|PEL|REL|OEL|MAK|EU-OEL|NIOSH\s+REL|OSHA\s+PEL|ACGIH\s+TLV)
+    (?:\s*[:\-]?\s*|\s+as\s+)?
+    (\d+\.?\d*)
+    \s*
+    (ppm|mg/m3|mg\/m3)
+    """
     
+    # Default value if nothing is found
+    tlv = "NDA"
+    
+    # Search for the first match
+    match = re.search(tlv_pattern, text)
+    if match:
+        tlv = f"{match.group(1)} {match.group(2)}"
+
+
+    idlh_pattern = r"""(?ix)
+    \b
+    (?:IDLH|Immediately\s+Dangerous\s+to\s+Life\s+or\s+Health)  # IDLH or full form
+    (?:\s*\(IDLH\))?                                            # optional (IDLH)
+    \s*[:=\-]?\s*                                               # optional colon, equal, dash, or just space
+    (\d+\.?\d*)                                                 # numeric value
+    \s*
+    (ppm|mg/m3|mg\/m3)?                                         # optional unit
+    """
+    
+    # Default value
+    idlh = "NDA"
+    
+    # Search for the first match
+    match = re.search(idlh_pattern, text)
+    if match:
+        value = match.group(1)
+        unit = match.group(2) if match.group(2) else ""
+        idlh = f"{value} {unit}".strip()
+        
     extracted_data = {
         "Description": desc,
         "CAS Number": cas_number,
@@ -534,8 +573,8 @@ def parse_sds_data(text, source_filename):
         "Density": density,
         "Relative Vapour Density (Air = 1)": vapor_density,
         "Ignition Temperature (°C)": ignition_temp,
-        "Threshold Limit Value (ppm)": find_between(r"TLV\s*:?\s*([^\n\r]+)", "NDA", "TLV"),
-        "Immediate Danger to Life in Humans": find_between(r"LC50\s*[-:]\s*.*?([0-9,]+.*?)\s*(mg|g|ppm|mL|L)", "NDA"),
+        "Threshold Limit Value (ppm)": tlv,
+        "Immediate Danger to Life in Humans": idlh,
         "LD50 (mg/kg)": ld50,
         "LC50": lc50,
         "Source of Information": "MSDS"
