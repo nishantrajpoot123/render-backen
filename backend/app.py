@@ -39,7 +39,8 @@ COLUMNS = [
     "Static Hazard",
     "Vapour Pressure",
     "Flash Point (°C)",
-    "Flammable Limits by Volume (LEL, UEL)",
+    "UEL (% by volume)",
+    "LEL (% by volume)",
     "Melting Point (°C)",
     "Boiling Point (°C)",
     "Density",
@@ -116,114 +117,6 @@ def clean_numeric_value(value_str):
     
     return "NDA"
 
-def extract_flammable_limits(text):
-    """
-    Extract flammable limits (LEL and UEL) with comprehensive pattern matching
-    Returns formatted string like "LEL: X%, UEL: Y%" or individual values
-    """
-    
-    # Initialize variables
-    lel_value = None
-    uel_value = None
-    
-    # Comprehensive patterns for flammable limits
-    flammable_patterns = [
-        # Pattern 1: LEL and UEL on same line with percentages
-        r"LEL[:\s]*(\d+(?:\.\d+)?)\s*%.*?UEL[:\s]*(\d+(?:\.\d+)?)\s*%",
-        r"Lower\s+explosive\s+limit[:\s]*(\d+(?:\.\d+)?)\s*%.*?Upper\s+explosive\s+limit[:\s]*(\d+(?:\.\d+)?)\s*%",
-        r"LFL[:\s]*(\d+(?:\.\d+)?)\s*%.*?UFL[:\s]*(\d+(?:\.\d+)?)\s*%",
-        
-        # Pattern 2: Range format like "2.1 - 12.8%" or "2.1% - 12.8%"
-        r"(?:LEL|Lower\s+explosive\s+limit|LFL|Flammable\s+limits?)[:\s]*(\d+(?:\.\d+)?)\s*%?\s*[-–—]\s*(\d+(?:\.\d+)?)\s*%",
-        r"Explosive\s+limits?[:\s]*(\d+(?:\.\d+)?)\s*%?\s*[-–—]\s*(\d+(?:\.\d+)?)\s*%",
-        r"Flammability\s+limits?[:\s]*(\d+(?:\.\d+)?)\s*%?\s*[-–—]\s*(\d+(?:\.\d+)?)\s*%",
-        
-        # Pattern 3: Parentheses format like "(2.1 - 12.8%)" or "(LEL: 2.1%, UEL: 12.8%)"
-        r"\(\s*(\d+(?:\.\d+)?)\s*%?\s*[-–—]\s*(\d+(?:\.\d+)?)\s*%?\s*\)",
-        r"\(\s*LEL[:\s]*(\d+(?:\.\d+)?)\s*%.*?UEL[:\s]*(\d+(?:\.\d+)?)\s*%\s*\)",
-        
-        # Pattern 4: Table-like format with vol% or volume%
-        r"(?:LEL|Lower)[:\s]*(\d+(?:\.\d+)?)\s*(?:vol\s*%|%\s*vol|%|volume\s*%).*?(?:UEL|Upper)[:\s]*(\d+(?:\.\d+)?)\s*(?:vol\s*%|%\s*vol|%|volume\s*%)",
-        
-        # Pattern 5: Simple numeric range without explicit LEL/UEL labels but in flammable context
-        r"(?:Flammable|Explosive)\s+(?:range|limits?)[:\s]*(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*%",
-        
-        # Pattern 6: Individual LEL/UEL on separate lines
-        r"LEL[:\s]*(\d+(?:\.\d+)?)\s*%",
-        r"UEL[:\s]*(\d+(?:\.\d+)?)\s*%",
-    ]
-    
-    # Try patterns that capture both LEL and UEL
-    for pattern in flammable_patterns[:5]:  # First 5 patterns capture both values
-        matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-        if matches:
-            match = matches[0]
-            if len(match) == 2:
-                lel_value = match[0].strip()
-                uel_value = match[1].strip()
-                logger.debug(f"Found LEL/UEL pair with pattern '{pattern}': LEL={lel_value}%, UEL={uel_value}%")
-                break
-    
-    # If we didn't find a pair, try individual patterns
-    if not lel_value or not uel_value:
-        # Look for individual LEL
-        lel_patterns = [
-            r"LEL[:\s]*(\d+(?:\.\d+)?)\s*%",
-            r"Lower\s+explosive\s+limit[:\s]*(\d+(?:\.\d+)?)\s*%",
-            r"LFL[:\s]*(\d+(?:\.\d+)?)\s*%",
-            r"Lower\s+flammable\s+limit[:\s]*(\d+(?:\.\d+)?)\s*%"
-        ]
-        
-        for pattern in lel_patterns:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            if matches:
-                lel_value = matches[0].strip()
-                logger.debug(f"Found individual LEL: {lel_value}%")
-                break
-        
-        # Look for individual UEL
-        uel_patterns = [
-            r"UEL[:\s]*(\d+(?:\.\d+)?)\s*%",
-            r"Upper\s+explosive\s+limit[:\s]*(\d+(?:\.\d+)?)\s*%",
-            r"UFL[:\s]*(\d+(?:\.\d+)?)\s*%",
-            r"Upper\s+flammable\s+limit[:\s]*(\d+(?:\.\d+)?)\s*%"
-        ]
-        
-        for pattern in uel_patterns:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            if matches:
-                uel_value = matches[0].strip()
-                logger.debug(f"Found individual UEL: {uel_value}%")
-                break
-    
-    # Format the result
-    if lel_value and uel_value:
-        result = f"LEL: {lel_value}%, UEL: {uel_value}%"
-    elif lel_value:
-        result = f"LEL: {lel_value}%"
-    elif uel_value:
-        result = f"UEL: {uel_value}%"
-    else:
-        # Check for explicit "not applicable" or "non-flammable" statements
-        non_flammable_patterns = [
-            r"not\s+flammable",
-            r"non[-\s]?flammable",
-            r"flammable\s+limits?\s*:?\s*(?:not\s+applicable|n/?a)",
-            r"explosive\s+limits?\s*:?\s*(?:not\s+applicable|n/?a)",
-            r"does\s+not\s+burn",
-            r"will\s+not\s+burn",
-            r"non[-\s]?combustible"
-        ]
-        
-        for pattern in non_flammable_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                logger.debug(f"Found non-flammable indicator: {pattern}")
-                return "Non-flammable"
-        
-        logger.debug("No flammable limits found")
-        result = "NDA"
-    
-    return result
 
 
 def parse_sds_data(text, source_filename):
@@ -556,6 +449,41 @@ def parse_sds_data(text, source_filename):
     ignition_temp = match.group(1) if match else "NDA"
 
 
+
+    # Refined regex pattern to extract UEL with label and value
+    pattern = r"""(?ix)
+    \b(
+        upper\s+(?:explosion|flammability)\s+limit
+        |
+        explosive\s+limit[-\s]*upper
+        |
+        upper\s+explosion\s+limit\s*\(%\s*by\s*volume\)
+        |
+        explosive\s+limit[-\s]*upper\s*\(%\s*\)
+        |
+        upper\s+explosion\s+limit
+        |
+        UEL\s*\(%\s*by\s*volume\)
+        |
+        \bUEL\b
+        |
+        upper\s+explosive\s+limit
+        |
+        upper\s+flammability\s*/\s*(?:explosion|explosive)\s+limit
+    )
+    \s*[:\-]?\s*
+    ([\-\d.,]+%?)
+    """
+    
+    # Default UEL value
+    uel = "NDA"
+    
+    # Search for the first match based on priority
+    match = re.search(pattern, text)
+    if match:
+        uel = match.group(2)
+
+    
     extracted_data = {
         "Description": desc,
         "CAS Number": cas_number,
@@ -565,7 +493,8 @@ def parse_sds_data(text, source_filename):
         "Static Hazard": static_hazard,
         "Vapour Pressure": vapour_pressure,
         "Flash Point (°C)": flash_point,
-        "Flammable Limits by Volume (LEL, UEL)": extract_flammable_limits(text),
+        "UEL (% by volume)": uel,
+        "LEL (% by volume)": lel,
         "Melting Point (°C)": melting_point,
         "Boiling Point (°C)": boiling_point,
         "Density": density,
