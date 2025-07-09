@@ -319,7 +319,7 @@ def parse_sds_data(text, source_filename):
     
     melting_point = "NDA"
     
-    match = re.search(pattern, text)
+    match = re.search(melt_pattern, text)
     if match:
         melting_point = match.group(2).strip()
 
