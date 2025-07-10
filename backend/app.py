@@ -301,19 +301,24 @@ def parse_sds_data(text, source_filename):
         trade_name = "NDA"
 
 
-    flash_point_pattern = r"""(?ix)                       # case-insensitive + verbose
-        \bflash\s+point\b                                 # matches 'Flash point'
-        \s*:?                                              # optional colon
-        \s*                                                # optional space
-        (-?\d+(?:[.,]?\d+)?(?:\s*°\s*[CF])?.*)             # capture negative value and everything after it
+    flash_pattern = r"""(?ix)
+    \b
+    (
+        flash\s+point\s*,\s*°\s*C
+      | flash\s+point\s+°\s*C
+      | flash\s+point\s*\(\s*°\s*C\s*\)
+      | flash\s+point\s*&\s*method
+      | flash\s+point
+    )
+    \s*[:=\s]+\s*
+    ([^\n\r]+)
     """
-    
     
     flash_point = "NDA"
     
-    match = re.search(flash_point_pattern, text)
+    match = re.search(flash_pattern, text)
     if match:
-        flash_point = match.group(1).strip()
+        flash_point = match.group(2).strip()
 
 
     
@@ -499,17 +504,28 @@ def parse_sds_data(text, source_filename):
         if len(extracted) <= 60 and "company" not in extracted.lower() and "/" not in extracted.lower():
             chemical_name = extracted
     
-    pattern = r"""(?ix)                                                        
-        (?:auto|self)?                                               
-        [-\s]?                                                       
-        ignition                                                     
-        (?:\s*temperature)?                                         
-        (?:\s*,?\s*°?\s*C)?                                         
-        \s*[:\-]?\s*                                                
-        ([\d,]+[.,]?\d*)                                            
+    igni_pattern = r"""(?ix)
+    \b
+    (
+      auto[\s-]ignition\s+temp\s*\(\s*°\s*C\s*\)
+      | auto[\s-]*ignition\s+temperature
+      | auto[\s-]*ignition\s+degree\s+C
+      | auto[\s-]*ignition\s+°\s*C
+      | auto[\s-]*ignition
+      | autoignition\s+temperature
+      | self\s+ignition\s+temperature
+      | ignition\s+temperature\s*,\s*°\s*C
+      | ignition\s+temperature
+    )
+    \s*[:=\s]+\s*
+    ([^\n\r]+)
     """
-    match = re.search(pattern, text)
-    ignition_temp = match.group(1) if match else "NDA"
+    
+    ignition_temp = "NDA"
+    
+    match = re.search(igni_pattern, text)
+    if match:
+        ignition_temp = match.group(2).strip()
 
 
 
