@@ -457,8 +457,6 @@ def parse_sds_data(text, source_filename):
    
 
     # LD50 extraction
-    ld50 = "NDA"
-
     pattern = r"""(?ix)
     LD50
     (?:\s*[-:()]?\s*)?
@@ -466,7 +464,7 @@ def parse_sds_data(text, source_filename):
     .*?
     (?:\(?\s*Rat\s*\)?)
     [^A-Za-z\n\r]{0,30}
-    ([><]?\s*\d[\d\s.,–\-]*\s*(?:mg|µg|ug|g|ppm|mg\/kg|mg\/l|mg/l))
+    ([><]?\s*\d+(?:[,\s]?\d+)*(?:\s*[–\-]\s*\d+(?:[,\s]?\d+)*)?\s*(?:mg|µg|ug|g|ppm)?\s*/?\s*(?:kg|l|m3)?)
     """
     
     match = re.search(pattern, text)
