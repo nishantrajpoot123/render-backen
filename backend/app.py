@@ -322,6 +322,7 @@ def parse_sds_data(text, source_filename):
     (
         melting\s+point\s*/\s*freezing\s+point
         |melting\s+point\s*,\s*°\s*C 
+        |melting\s+point\s*°\s*C
         | freezing\s*/\s*melting\s+point
         | freezing\s+point\s*/\s*range
         | melting\s*/\s*freezing\s+point\s*(?:°\s*C|deg\s*C)?
