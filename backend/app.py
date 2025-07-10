@@ -234,18 +234,36 @@ def parse_sds_data(text, source_filename):
     desc = os.path.splitext(source_filename)[0]
     
     # Enhanced pattern matching for various properties
-    physical_state = find_between(
-        r"""(?ix)
-            \b(?:physical\s+state|appearance:\s+form|appearance)              # keywords
-            (?:\s+at\s+[^\n\r:]*?(?:degree|°)\s*[CF])?           # optional: at 25 degreeC or °C etc.
-            \s*[:\-]?\s*                                         # optional colon or dash
-            ([^\n\r.]+)                                          # capture physical state
-        """,
-        "NDA",
-        "Physical State"
+    pattern_case_insensitive = r"""(?ix)
+    \b
+    (
+        Physical\s+state
+      | Appearance\s*:\s*Form
+      | Appearance
+      | Form\s+at\s+room\s+temperature
+        (?:\s*\(\s*\d{1,3}(?:\.\d+)?\s*(?:°\s*C|C|K|Kelvin)?\s*\))?
     )
-
+    \s*[:\-]?\s*
+    ([^\n\r.]+)
+    """
     
+    # 2️⃣ Case-sensitive fallback pattern (lowest priority)
+    pattern_case_sensitive = r"""
+    \bForm\s*[:\-]?\s*([^\n\r.]+)
+    """
+    
+    physical_state = "NDA"
+    
+    # First, try the high-priority case-insensitive patterns
+    match = re.search(pattern_case_insensitive, text)
+    if match:
+        physical_state = match.group(2).strip()
+    else:
+        # Fallback: case-sensitive "Form"
+        match = re.search(pattern_case_sensitive, text)
+        if match:
+            physical_state = match.group(1).strip()
+        
     
     static_hazard = extract_static_hazard(text)
 
@@ -435,31 +453,28 @@ def parse_sds_data(text, source_filename):
             break
 
                 
-    chemical_name_patterns = [
-        r"(?i)Material name[:\s]*([^\n\r]+)",
-        r"(?i)Product name[:\s]*([^\n\r]+)",
-        r"(?i)Product names[:\s]*([^\n\r]+)",
-        r"(?i)Product Name:[:\s]*([^\n\r]+)",
-        r"(?i)Product name\s*:[:\s]*([^\n\r]+)",
-        r"(?i)Product description[:\s]*([^\n\r]+)",
-        r"(?i)Identification of the substance[:\s]*([^\n\r]+)",
-    ]
-
-
-    name = "NDA"
-
-    for pattern in chemical_name_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            extracted = match.group(1).strip()
-
-            # ✅ Skip if it's clearly a section header (too long or contains slashes)
-            if len(extracted) > 60 or "/" in extracted.lower() or "company" in extracted.lower():
-                continue
-
-            name = extracted
-            break
-
+    name_pattern = r"""(?ix)
+    \b
+    (
+        Material\s+name
+        | Product\s+names
+        | Product\s+Name
+        | Product\s+description
+        | Identification\s+of\s+the\s+substance
+    )
+    \s*[:\-]?\s+                  # allow colon or dash or just multiple spaces
+    ([^\n\r]+)                    # capture everything after
+    """
+    
+    chemical_name = "NDA"
+    
+    match = re.search(name_pattern, text)
+    if match:
+        extracted = match.group(2).strip()
+    
+        # Filter out section headers and company mentions
+        if len(extracted) <= 60 and "company" not in extracted.lower() and "/" not in extracted.lower():
+            chemical_name = extracted
     
     pattern = r"""(?ix)                                                        
         (?:auto|self)?                                               
@@ -585,7 +600,7 @@ def parse_sds_data(text, source_filename):
     extracted_data = {
         "Description": desc,
         "CAS Number": cas_number,
-        "Material Name": name,
+        "Material Name": chemical_name,
         "Trade Name": trade_name,
         "Physical state": physical_state,
         "Static Hazard": static_hazard,
