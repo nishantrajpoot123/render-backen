@@ -472,6 +472,8 @@ def parse_sds_data(text, source_filename):
     match = re.search(pattern, text)
     if match:
         ld50 = match.group(1).strip()
+
+    
     lc50_patterns = [
         r"LC[50₅O]+\s*(?:inhalation)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/L(?:\s*\((?!.*fish|zebrafish|minnow).*?\))?(?:\s*\d+\s*(?:h|hr))?)",
         r"LC[50₅O]+\s*(?:inhalation)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*ppm(?:\s*\((?!.*fish|zebrafish|minnow).*?\))?(?:\s*\d+\s*(?:h|hr))?)"
@@ -622,13 +624,13 @@ def parse_sds_data(text, source_filename):
 
 
    idlh_pattern = r"""(?ix)
-    \b
-    (
-        immediately\s+dangerous\s+to\s+life\s+or\s+health
-      | IDLH
-    )
-    \s*[:=\s]+\s*
-    ([^\n\r]+)
+        \b
+        (
+            immediately\s+dangerous\s+to\s+life\s+or\s+health
+            | IDLH
+        )
+        \s*[:=\s]+\s*
+        ([^\n\r]+)
     """
     
     idlh = "NDA"
