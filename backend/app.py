@@ -305,6 +305,7 @@ def parse_sds_data(text, source_filename):
     \b
     (
         flash\s+point\s*,\s*°\s*C
+      | flash\s+point\s*\(\s*C\s*\)\s*+method
       | flash\s+point\s+°\s*C
       | flash\s+point\s*\(\s*°\s*C\s*\)
       | flash\s+point\s*&\s*method
@@ -456,17 +457,21 @@ def parse_sds_data(text, source_filename):
    
 
     # LD50 extraction
-    ld50_patterns = [
-        r"LD[50₅O]+\s*(?:oral|dermal)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/kg(?:\s*\(.*?\))?)",
-        r"LD[50₅O]+\s*[:\-]?\s*(?:oral|dermal)?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/kg(?:\s*\(.*?\))?)",
-        r"LD[50₅O]+\s*(?:oral|dermal)?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/kg(?:\s*\(.*?\))?)",
-    ]
-
     ld50 = "NDA"
-    for pattern in ld50_patterns:
-        ld50 = find_between(pattern, "NDA", "LD50")
-        if ld50 != "NDA":
-            break
+
+    pattern = r"""(?ix)
+    LD50
+    (?:\s*[-:()]?\s*)?
+    (?:Oral|Dermal|Subcutaneous|Inhalation|Inhalative)?
+    .*?
+    (?:\(?\s*Rat\s*\)?)
+    [^A-Za-z\n\r]{0,30}
+    ([><]?\s*\d[\d\s.,–\-]*\s*(?:mg|µg|ug|g|ppm|mg\/kg|mg\/l|mg/l))
+    """
+    
+    match = re.search(pattern, text)
+    if match:
+        ld50 = match.group(1).strip()
     lc50_patterns = [
         r"LC[50₅O]+\s*(?:inhalation)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*(?:mg|g)/L(?:\s*\((?!.*fish|zebrafish|minnow).*?\))?(?:\s*\d+\s*(?:h|hr))?)",
         r"LC[50₅O]+\s*(?:inhalation)?\s*[:\-]?\s*([><=]?\s*\d+(?:[.,]\d+)?\s*ppm(?:\s*\((?!.*fish|zebrafish|minnow).*?\))?(?:\s*\d+\s*(?:h|hr))?)"
@@ -616,26 +621,24 @@ def parse_sds_data(text, source_filename):
         tlv = f"{match.group(1)} {match.group(2)}"
 
 
-    idlh_pattern = r"""(?ix)
-        \b
-        (?:IDLH|Immediately\s+Dangerous\s+to\s+Life\s+or\s+Health)  # IDLH or full form
-        (?:\s*\(IDLH\))?                                            # optional (IDLH)
-        \s*[:=\-]?\s*                                               # optional colon, equal, dash, or just space
-        (\d+\.?\d*)                                                 # numeric value
-        \s*
-        (ppm|mg/m3|mg\/m3)?                                         # optional unit
-        """
+   idlh_pattern = r"""(?ix)
+    \b
+    (
+        immediately\s+dangerous\s+to\s+life\s+or\s+health
+      | IDLH
+    )
+    \s*[:=\s]+\s*
+    ([^\n\r]+)
+    """
     
-    # Default value
     idlh = "NDA"
     
-    # Search for the first match
     match = re.search(idlh_pattern, text)
     if match:
-        value = match.group(1)
-        unit = match.group(2) if match.group(2) else ""
-        idlh = f"{value} {unit}".strip()
-        
+        idlh = match.group(2).strip()
+
+    
+    
     extracted_data = {
         "Description": desc,
         "CAS Number": cas_number,
