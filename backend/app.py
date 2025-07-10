@@ -321,6 +321,7 @@ def parse_sds_data(text, source_filename):
     \b
     (
         melting\s+point\s*/\s*freezing\s+point
+        |melting\s+point\s*,\s*°\s*C 
         | freezing\s*/\s*melting\s+point
         | freezing\s+point\s*/\s*range
         | melting\s*/\s*freezing\s+point\s*(?:°\s*C|deg\s*C)?
@@ -343,11 +344,30 @@ def parse_sds_data(text, source_filename):
 
 
     
-    boiling_point = find_between(
-        r"(?i)\b(?:boiling\s*point(?:\s*(?:or|,)?\s*initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?)?|initial\s*boiling\s*point(?:\s*and\s*boiling\s*range)?|boiling\s*point\s*/\s*range|boiling\s*point\s*/\s*boiling\s*range|boiling\s*point\s*,?\s*range|boiling\s*point\s*\(.*?\))\b[:\s\-]*([^\n\r]*)",
-        "NDA",
-        "Boiling Point"
+    boil_pattern = r"""(?ix)
+    \b
+    (
+        initial\s+boiling\s+point\s*/\s*boiling\s+ranges
+      | initial\s+boiling\s+point\s+and\s+boiling\s+range\s*\(°?\s*C\)?
+      | initial\s+boiling\s+point\s+and\s+boiling\s+range
+      | initial\s+boiling\s+point\s*/\s*boiling\s+range
+      | boiling\s+point\s*/\s*boiling\s+range
+      | boiling\s+point\s*/\s*range
+      | boiling\s+point\s*\(\s*\d+\s*mm\s*hg\s*\)
+      | boiling\s+point\s*,\s*°?\s*C
+      | boiling\s+point\s*\(°?\s*C\s*\)
+      | boiling\s+point\s+°?\s*C
+      | boiling\s+point
     )
+    \s*[:=\s]+\s*
+    ([^\n\r]+)
+    """
+    
+    boiling_point = "NDA"
+    
+    match = re.search(boil_pattern, text)
+    if match:
+        boiling_point = match.group(2).strip()
     
     density = "NDA"
     
@@ -458,7 +478,9 @@ def parse_sds_data(text, source_filename):
     (
         Material\s+name
         | Product\s+names
-        | Product\s+Name
+        | Product\s+name
+        | Chemical\s+name
+        | Substance\s+name
         | Product\s+description
         | Identification\s+of\s+the\s+substance
     )
