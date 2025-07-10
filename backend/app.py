@@ -623,7 +623,7 @@ def parse_sds_data(text, source_filename):
         tlv = f"{match.group(1)} {match.group(2)}"
 
 
-   idlh_pattern = r"""(?ix)
+    idlh_pattern = r"""(?ix)
         \b
         (
             immediately\s+dangerous\s+to\s+life\s+or\s+health
