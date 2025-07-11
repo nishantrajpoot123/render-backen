@@ -273,7 +273,7 @@ def parse_sds_data(text, source_filename):
     vp_pattern = r"""(?ix)                             # (?i) case-insensitive, (?x) verbose mode
         vapo[u]?r\s+pressure                           # 'vapor pressure' or 'vapour pressure'
         (?:\s*\(.*?\))?                                # optional: (mmHg), (Pa), etc.
-        (?:\s+at\s+\d{1,3}\s*(?:degree)?\s*[°]?[Cc])?   # optional: 'at 20 degreeC' or 'at 30 C'
+        (?:\s+(?:at|@)\s+\d{1,3}\s*(?:degree)?\s*[°]?[Cc])?   # optional: 'at 20 degreeC' or 'at 30 C'
         \s*[:\-]?\s*                                   # optional: colon, dash
         (.*)                                           # capture the rest of the line
     """
