@@ -238,6 +238,7 @@ def parse_sds_data(text, source_filename):
     \b
     (
         Physical\s+state
+      | appearance\s+,\s+odour\s+)\s+\s+Appearance
       | Appearance\s*:\s*Form
       | Appearance
       | Form\s+at\s+room\s+temperature
@@ -416,6 +417,8 @@ def parse_sds_data(text, source_filename):
                 |
                 Density\s*/\s*Specific\s+gravity
                 |
+                Relative\s+density\s*\(water\s*=\s*1\)
+                |
                 Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
                 |
                 Density\s*@\s*\d{1,3}\s*[CFK]
@@ -484,11 +487,11 @@ def parse_sds_data(text, source_filename):
                 
     name_pattern = r"""(?ix)
     \b
-    (
-        Material\s+name
+    ( 
+        Chemical\s+name
+        | Material\s+name
         | Product\s+names
         | Product\s+name
-        | Chemical\s+name
         | Substance\s+name
         | Product\s+description
         
