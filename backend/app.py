@@ -457,19 +457,17 @@ def parse_sds_data(text, source_filename):
    
 
     # LD50 extraction
-    pattern = r"""(?ix)
-    LD50
-    (?:\s*[-:()]?\s*)?
-    (?:Oral|Dermal|Subcutaneous|Inhalation|Inhalative)?
-    .*?
-    (?:\(?\s*Rat\s*\)?)
-    [^A-Za-z\n\r]{0,30}
-    ([><]?\s*\d+(?:[,\s]?\d+)*(?:\s*[–\-]\s*\d+(?:[,\s]?\d+)*)?\s*(?:mg|µg|ug|g|ppm)?\s*/?\s*(?:kg|l|m3)?)
-    """
-    
-    match = re.search(pattern, text)
-    if match:
-        ld50 = match.group(1).strip()
+    ld50_patterns = [
+        r"LD50.*?([0-9,]+[.,]?\d*)\s*mg/kg",
+        r"LD50\s*:?\s*([\d,]+[.,]?\d*)\s*mg/kg",
+        r"LD50\s*:?\s*(?:oral|dermal)?\s*([\d,]+[.,]?\d*)\s*mg/kg",
+        r"LD₅₀\s*:?\s*(?:oral|dermal)?\s*([\d,]+[.,]?\d*)\s*mg/kg"
+    ]
+    ld50 = "NDA"
+    for pattern in ld50_patterns:
+        ld50 = find_between(pattern, "NDA", "LD50")
+        if ld50 != "NDA":
+            break
 
     
     lc50_patterns = [
