@@ -491,7 +491,7 @@ def parse_sds_data(text, source_filename):
         | Chemical\s+name
         | Substance\s+name
         | Product\s+description
-        | Identification\s+of\s+the\s+substance
+        
     )
     \s*[:\-]?\s+                  # allow colon or dash or just multiple spaces
     ([^\n\r]+)                    # capture everything after
@@ -503,10 +503,7 @@ def parse_sds_data(text, source_filename):
     if match:
         extracted = match.group(2).strip()
     
-        # Filter out section headers and company mentions
-        if len(extracted) <= 60 and "company" not in extracted.lower() and "/" not in extracted.lower():
-            chemical_name = extracted
-    
+        
     igni_pattern = r"""(?ix)
     \b
     (
