@@ -501,7 +501,7 @@ def parse_sds_data(text, source_filename):
     
     match = re.search(name_pattern, text)
     if match:
-        extracted = match.group(2).strip()
+        chemical_name = match.group(2).strip()
     
         
     igni_pattern = r"""(?ix)
