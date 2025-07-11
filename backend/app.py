@@ -238,7 +238,6 @@ def parse_sds_data(text, source_filename):
     \b
     (
         Physical\s+state
-      | appearance\s+,\s+odour\s+)\s+\s+Appearance
       | Appearance\s*:\s*Form
       | Appearance
       | Form\s+at\s+room\s+temperature
