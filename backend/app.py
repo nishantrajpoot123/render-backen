@@ -417,7 +417,7 @@ def parse_sds_data(text, source_filename):
                 |
                 Density\s*/\s*Specific\s+gravity
                 |
-                Relative\s+density\s*\(water\s*=\s*1\)
+                Relative\s+density\s*+\s+\s+(\s+\s+water\s*+\s=+\s*+1+\s)
                 |
                 Density\s+at\s+\d{1,3}\s*(?:°|degree)?\s*[CFK]
                 |
